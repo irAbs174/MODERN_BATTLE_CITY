@@ -8,3 +8,12 @@ browser with the Web Audio API.
 
 Built with **Vite + TypeScript + Canvas 2D**. No game engine, no image files, no
 audio files, no copyrighted material.
+
+---
+
+## Quick start
+
+```bash
+npm install
+npm run dev        # http://localhost:5173
+```
