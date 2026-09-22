@@ -1,0 +1,15 @@
+.git
+.github
+.cursor
+.vscode
+.idea
+node_modules
+dist-ssr
+coverage
+*.md
+*.log
+*.local
+.DS_Store
+.vite
+agent-transcripts
+deploy/nginx.host.conf
