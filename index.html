@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#07080c" />
+    <meta name="description" content="TANKFORGE — a modern reimagining of the classic top-down arcade tank game. Destructible arenas, deep upgrades, boss fights." />
+    <title>TANKFORGE — Modern Arcade Tank Combat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230b0e14'/><circle cx='16' cy='16' r='6' fill='%23ffb547'/><rect x='14' y='2' width='4' height='12' rx='2' fill='%237ce7ff'/></svg>" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- ============ GAME CANVAS ============ -->
+      <canvas id="game" tabindex="0" aria-label="Game viewport"></canvas>
+
+      <!-- ============ HUD ============ -->
+      <div id="hud" class="hud hidden" aria-hidden="true">
+        <!-- top-left: vitals -->
+        <div class="hud-vitals panel">
+          <div class="vitals-head">
+            <span class="chassis-tag" id="hud-chassis">TF-1 RANGER</span>
+            <span class="lives" id="hud-lives" title="Reserve hulls"></span>
+          </div>
+          <div class="bar bar-hp" title="Hull integrity">
+            <div class="bar-fill" id="hud-hp-fill"></div>
+            <div class="bar-ghost" id="hud-hp-ghost"></div>
+            <span class="bar-label" id="hud-hp-text">100 / 100</span>
+          </div>
+          <div class="bar bar-shield" id="hud-shield-wrap" title="Energy shield">
+            <div class="bar-fill" id="hud-shield-fill"></div>
+            <span class="bar-label" id="hud-shield-text">SHIELD 0</span>
+          </div>
+          <div class="bar bar-boost" title="Boost energy">
+            <div class="bar-fill" id="hud-boost-fill"></div>
+            <span class="bar-label">BOOST</span>
+          </div>
+          <div class="buffs" id="hud-buffs"></div>
+        </div>
+
+        <!-- top-center: score / objective -->
+        <div class="hud-top">
+          <div class="score-block panel">
+            <div class="score-value" id="hud-score">0</div>
+            <div class="score-sub">
+              <span id="hud-combo" class="combo"></span>
+              <span id="hud-coins" class="coins">◎ 0</span>
+            </div>
+          </div>
+          <div class="objective panel" id="hud-objective">
+            <span class="obj-wave" id="hud-wave">WAVE 1</span>
+            <span class="obj-text" id="hud-objective-text">Eliminate all hostiles</span>
+            <span class="obj-left" id="hud-enemies-left">0 hostiles</span>
+          </div>
+        </div>
+
+        <!-- boss bar -->
+        <div class="boss-bar hidden" id="hud-boss">
+          <div class="boss-name" id="hud-boss-name">THE FORTRESS</div>
+          <div class="boss-track">
+            <div class="boss-fill" id="hud-boss-fill"></div>
+            <div class="boss-shield" id="hud-boss-shield"></div>
+            <div class="boss-pips" id="hud-boss-pips"></div>
+          </div>
+          <div class="boss-phase" id="hud-boss-phase">PHASE 1</div>
+        </div>
+
+        <!-- top-right: minimap -->
+        <div class="hud-map panel" id="hud-map-wrap">
+          <div class="map-head">
+            <span>TACTICAL</span>
+            <span id="hud-timer" class="map-timer">0:00</span>
+          </div>
+          <canvas id="minimap" width="168" height="168"></canvas>
+        </div>
+
+        <!-- bottom-left: weapons -->
+        <div class="hud-weapons panel" id="hud-weapons">
+          <div class="weapon-current">
+            <div class="weapon-name" id="hud-weapon-name">M-60 FIELD CANNON</div>
+            <div class="weapon-role" id="hud-weapon-role">Balanced</div>
+            <div class="weapon-heat"><div class="weapon-heat-fill" id="hud-weapon-heat"></div></div>
+          </div>
+          <div class="weapon-slots" id="hud-weapon-slots"></div>
+        </div>
+
+        <!-- bottom-right: ability -->
+        <div class="hud-ability" id="hud-ability">
+          <button class="ability-btn" id="ability-btn" type="button" aria-label="Special ability">
+            <svg viewBox="0 0 100 100" class="ability-ring" aria-hidden="true">
+              <circle class="ring-bg" cx="50" cy="50" r="44" />
+              <circle class="ring-fg" id="ability-ring" cx="50" cy="50" r="44" />
+            </svg>
+            <span class="ability-icon" id="ability-icon">»</span>
+            <span class="ability-key" id="ability-key">E</span>
+          </button>
+          <div class="ability-name" id="ability-name">KINETIC DASH</div>
+        </div>
+
+        <!-- centre banner -->
+        <div class="banner" id="hud-banner"><span id="hud-banner-text"></span></div>
+
+        <!-- hit marker -->
+        <div class="hitmarker" id="hud-hitmarker"></div>
+
+        <!-- fps / debug -->
+        <div class="hud-fps hidden" id="hud-fps">60 FPS</div>
+
+        <!-- modifiers -->
+        <div class="hud-mods hidden" id="hud-mods"></div>
+      </div>
+
+      <!-- ============ TOUCH CONTROLS ============ -->
+      <div id="touch" class="touch hidden">
+        <div class="stick-zone" id="stick-zone">
+          <div class="stick" id="stick">
+            <div class="stick-knob" id="stick-knob"></div>
+          </div>
+        </div>
+        <div class="touch-buttons">
+          <button class="tbtn tbtn-fire" id="tbtn-fire" type="button">FIRE</button>
+          <button class="tbtn tbtn-ability" id="tbtn-ability" type="button">ABL</button>
+          <button class="tbtn tbtn-boost" id="tbtn-boost" type="button">BST</button>
+          <button class="tbtn tbtn-weapon" id="tbtn-weapon" type="button">WPN</button>
+          <button class="tbtn tbtn-pause" id="tbtn-pause" type="button">II</button>
+        </div>
+      </div>
+
+      <!-- ============ SCREENS ============ -->
+      <div id="screens">
+        <!-- BOOT / LOADING -->
+        <section class="screen active" data-screen="boot">
+          <div class="boot-wrap">
+            <div class="boot-logo">TANKFORGE</div>
+            <div class="boot-bar"><div class="boot-bar-fill" id="boot-fill"></div></div>
+            <div class="boot-text" id="boot-text">Initialising forge systems…</div>
+          </div>
+        </section>
+
+        <!-- MAIN MENU -->
+        <section class="screen" data-screen="menu">
+          <div class="menu-bg"></div>
+          <div class="menu-grid">
+            <header class="title-block">
+              <div class="title-kicker">MODERN ARCADE TANK COMBAT</div>
+              <h1 class="title">TANK<span>FORGE</span></h1>
+              <p class="tagline">
+                Destructible arenas. Eight weapons. Ten abilities. Two super-heavy bosses.
+                Everything you build carries into the next fight.
+              </p>
+            </header>
+            <nav class="menu-nav" id="menu-nav">
+              <button class="nav-btn primary" data-action="campaign" type="button">
+                <span class="nav-icon">⚑</span>
+                <span class="nav-body"><b>CAMPAIGN</b><i id="menu-campaign-sub">24 stages · 6 warzones</i></span>
+                <span class="nav-go">›</span>
+              </button>
+              <button class="nav-btn" data-action="endless" type="button">
+                <span class="nav-icon">∞</span>
+                <span class="nav-body"><b>ENDLESS</b><i>Procedural arena · infinite waves</i></span>
+                <span class="nav-go">›</span>
+              </button>
+              <button class="nav-btn" data-action="survival" type="button">
+                <span class="nav-icon">☠</span>
+                <span class="nav-body"><b>SURVIVAL</b><i>No HQ. Endure.</i></span>
+                <span class="nav-go">›</span>
+              </button>
+              <button class="nav-btn" data-action="challenge" type="button">
+                <span class="nav-icon">✦</span>
+                <span class="nav-body"><b>CHALLENGE</b><i id="menu-challenge-sub">Random modifiers</i></span>
+                <span class="nav-go">›</span>
+              </button>
+              <button class="nav-btn" data-action="bossrush" type="button">
+                <span class="nav-icon">⚔</span>
+                <span class="nav-body"><b>BOSS RUSH</b><i>Five super-heavies, back to back</i></span>
+                <span class="nav-go">›</span>
+              </button>
+              <button class="nav-btn" data-action="garage" type="button">
+                <span class="nav-icon">⚙</span>
+                <span class="nav-body"><b>THE FORGE</b><i id="menu-garage-sub">Upgrades · weapons · chassis</i></span>
+                <span class="nav-go">›</span>
+              </button>
+              <button class="nav-btn" data-action="settings" type="button">
+                <span class="nav-icon">☰</span>
+                <span class="nav-body"><b>SETTINGS</b><i>Audio · accessibility · controls</i></span>
+                <span class="nav-go">›</span>
+              </button>
+              <button class="nav-btn" data-action="about" type="button">
+                <span class="nav-icon">◈</span>
+                <span class="nav-body"><b>ABOUT</b><i>Developer · credits</i></span>
+                <span class="nav-go">›</span>
+              </button>
+            </nav>
+            <aside class="menu-side">
+              <div class="pilot-card panel">
+                <div class="pilot-head">
+                  <span class="pilot-label">COMMANDER</span>
+                  <span class="pilot-level" id="menu-level">LV 1</span>
+                </div>
+                <div class="pilot-xp">
+                  <div class="pilot-xp-fill" id="menu-xp-fill"></div>
+                  <span id="menu-xp-text">0 / 120 XP</span>
+                </div>
+                <div class="pilot-stats">
+                  <div><b id="menu-coins">0</b><i>◎ CREDITS</i></div>
+                  <div><b id="menu-kills">0</b><i>☠ KILLS</i></div>
+                  <div><b id="menu-stages">0/16</b><i>⚑ STAGES</i></div>
+                </div>
+                <div class="pilot-chassis" id="menu-chassis-name">TF-1 RANGER</div>
+              </div>
+              <div class="record-card panel" id="menu-records">
+                <div class="record-title">LOCAL RECORDS</div>
+                <div id="menu-record-list"></div>
+              </div>
+              <div class="hint-card">
+                <b>QUICK PLAY</b>
+                <span>Press <kbd>Enter</kbd> to deploy · <kbd>Esc</kbd> for menu</span>
+              </div>
+            </aside>
+          </div>
+          <footer class="menu-footer">
+            <span id="footer-version">TANKFORGE v1.0</span>
+            <button class="footer-sig" data-action="about" type="button">by Abbas Damerchi</button>
+            <span class="footer-controls">WASD move · Mouse aim · Click fire · Shift boost · E ability · Q swap weapon</span>
+          </footer>
+        </section>
+
+        <!-- CAMPAIGN / LEVEL SELECT -->
+        <section class="screen" data-screen="campaign">
+          <div class="screen-head">
+            <button class="icon-btn" data-action="back" type="button" aria-label="Back">‹</button>
+            <h2>CAMPAIGN</h2>
+            <div class="head-meta">
+              <span id="campaign-coins">◎ 0</span>
+              <span id="campaign-progress">0% complete</span>
+            </div>
+          </div>
+          <div class="world-tabs" id="world-tabs"></div>
+          <div class="stage-grid" id="stage-grid"></div>
+          <div class="screen-foot">
+            <div class="difficulty-picker" id="difficulty-picker"></div>
+          </div>
+        </section>
+
+        <!-- GARAGE -->
+        <section class="screen" data-screen="garage">
+          <div class="screen-head">
+            <button class="icon-btn" data-action="back" type="button" aria-label="Back">‹</button>
+            <h2>THE FORGE</h2>
+            <div class="head-meta">
+              <span class="credits" id="garage-coins">◎ 0</span>
+              <span class="lvl" id="garage-level">LV 1</span>
+            </div>
+          </div>
+          <div class="garage-tabs" id="garage-tabs">
+            <button class="gtab active" data-tab="chassis" type="button">CHASSIS</button>
+            <button class="gtab" data-tab="upgrades" type="button">UPGRADES</button>
+            <button class="gtab" data-tab="weapons" type="button">WEAPONS</button>
+            <button class="gtab" data-tab="abilities" type="button">ABILITIES</button>
+            <button class="gtab" data-tab="base" type="button">HQ</button>
+            <button class="gtab" data-tab="cosmetics" type="button">COSMETICS</button>
+          </div>
+          <div class="garage-body">
+            <div class="garage-preview">
+              <canvas id="garage-canvas" width="420" height="330"></canvas>
+              <div class="preview-stats" id="garage-stats"></div>
+            </div>
+            <div class="garage-panel" id="garage-panel"></div>
+          </div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section class="screen" data-screen="settings">
+          <div class="screen-head">
+            <button class="icon-btn" data-action="back" type="button" aria-label="Back">‹</button>
+            <h2>SETTINGS</h2>
+            <div class="head-meta"><span>Changes save automatically</span></div>
+          </div>
+          <div class="settings-body" id="settings-body"></div>
+        </section>
+
+        <!-- ABOUT / DEVELOPER -->
+        <section class="screen" data-screen="about">
+          <div class="screen-head">
+            <button class="icon-btn" data-action="back" type="button" aria-label="Back">‹</button>
+            <h2>ABOUT</h2>
+            <div class="head-meta"><span>Developer · credits</span></div>
+          </div>
+          <div class="about-body" id="about-body"></div>
+        </section>
+
+        <!-- PAUSE -->
+        <section class="screen overlay-screen" data-screen="pause">
+          <div class="overlay-card panel">
+            <h2 class="overlay-title">PAUSED</h2>
+            <div class="overlay-stats" id="pause-stats"></div>
+            <div class="overlay-actions">
+              <button class="btn primary" data-action="resume" type="button">RESUME</button>
+              <button class="btn" data-action="settings" type="button">SETTINGS</button>
+              <button class="btn" data-action="restart" type="button">RESTART</button>
+              <button class="btn danger" data-action="quit" type="button">ABANDON RUN</button>
+            </div>
+            <div class="overlay-hint">Esc resumes · R restarts</div>
+          </div>
+        </section>
+
+        <!-- RESULTS (victory / defeat) -->
+        <section class="screen overlay-screen" data-screen="results">
+          <div class="overlay-card panel results-card">
+            <div class="result-banner" id="result-banner">SECTOR SECURED</div>
+            <div class="result-stars" id="result-stars"></div>
+            <div class="result-grid" id="result-grid"></div>
+            <div class="result-rewards" id="result-rewards"></div>
+            <div class="result-unlocks" id="result-unlocks"></div>
+            <div class="overlay-actions">
+              <button class="btn primary" data-action="next" type="button" id="result-next">NEXT STAGE</button>
+              <button class="btn" data-action="retry" type="button">RETRY</button>
+              <button class="btn" data-action="forge" type="button">THE FORGE</button>
+              <button class="btn" data-action="menu" type="button">MAIN MENU</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- GAME OVER (arcade modes) -->
+        <section class="screen overlay-screen" data-screen="gameover">
+          <div class="overlay-card panel results-card">
+            <div class="result-banner defeat" id="gameover-banner">RUN ENDED</div>
+            <div class="result-grid" id="gameover-grid"></div>
+            <div class="result-rewards" id="gameover-rewards"></div>
+            <div class="leaderboard" id="gameover-board"></div>
+            <div class="overlay-actions">
+              <button class="btn primary" data-action="retry" type="button">DEPLOY AGAIN</button>
+              <button class="btn" data-action="forge" type="button">THE FORGE</button>
+              <button class="btn" data-action="menu" type="button">MAIN MENU</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Toast notifications -->
+      <div id="toasts" class="toasts"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
