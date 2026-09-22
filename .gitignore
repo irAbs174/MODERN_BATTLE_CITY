@@ -9,4 +9,3 @@ coverage
 *.log
 tsconfig.tsbuildinfo
 *.tsbuildinfo
-.env
