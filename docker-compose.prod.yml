@@ -1,0 +1,7 @@
+# Production overlay: nginx image from CI-built dist/.
+# The host cannot rely on npm registry access inside Docker.
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.prebuilt
