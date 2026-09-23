@@ -1,7 +1,7 @@
 # MODERN_BATTLE_CITY
 
-A polished, modern reimagining of the NES classic **Battle City** — top-down tank
-combat, destructible terrain, a protected HQ, and escalating enemy waves — rebuilt
+A polished, modern reimagining of the NES classic **Battle City**  top-down tank
+combat, destructible terrain, a protected HQ, and escalating enemy waves  rebuilt
 from scratch with meta-progression, five game modes, and **procedural gameplay art**.
 Every sprite is drawn procedurally to canvas and every sound is synthesised in the
 browser with the Web Audio API. Raster files on the About screen (developer
@@ -9,6 +9,9 @@ portrait and a historical NES title clip) are the only exception.
 
 Built with **Vite + TypeScript + Canvas 2D**. No game engine, no audio files, no
 copyrighted material.
+
+![Logic in Motion](https://tank.damerchi.ir/battle-city-nes.gif)
+
 
 ---
 
@@ -74,7 +77,7 @@ enable the isolated nginx site, then `certbot --nginx -d tank.damerchi.ir` only.
 
 | Action | Keys |
 | --- | --- |
-| Drive | `W` `A` `S` `D` — full 8-directional movement |
+| Drive | `W` `A` `S` `D`  full 8-directional movement |
 | Aim turret | Mouse (independent of hull, free 360°) |
 | Fire | `Space` or Left Mouse |
 | Special ability | `E` or Right Mouse |
@@ -101,21 +104,21 @@ credits).
 ## Features
 
 ### Combat & terrain
-- **8 weapons** — Cannon, Rapid, Heavy, Flamethrower, Plasma, Rocket, Railgun, Mortar
+- **8 weapons**  Cannon, Rapid, Heavy, Flamethrower, Plasma, Rocket, Railgun, Mortar
   (each with distinct projectiles: piercing, splash, arcing lobbed shells, cone flame,
   damage-over-time burn).
-- **10 special abilities** — Dash, Mine, Airstrike, EMP, Time-slow, Shield, Drone,
+- **10 special abilities**  Dash, Mine, Airstrike, EMP, Time-slow, Shield, Drone,
   Laser, Chrono and more, on a cooldown meter.
 - Arenas mix **destructible brick**, **hardened stone**, and **metal plate**, plus
   elemental ground: **ice** (low traction), **water** (treads cannot cross; hover can),
   **forest** (blocks sight and conceals tanks), **sand** (slow going) and **lava**
   (burns hulls). The arena edge still stops tanks and shots.
-- **The HQ (base)** must be defended — lose it and the run is over. It can be upgraded
+- **The HQ (base)** must be defended  lose it and the run is over. It can be upgraded
   with more HP and up to 4 auto-firing turrets.
 
 ### Enemies & AI
 - **12 enemy types** across distinct AI archetypes: Scout, Raider, Assault, Sniper,
-  Missile, Shield, Heavy, Hunter, Elite, Wraith, plus two multi-phase bosses —
+  Missile, Shield, Heavy, Hunter, Elite, Wraith, plus two multi-phase bosses 
   **Fortress** and **Colossus**.
 - Flow-field pathfinding to both the player and the HQ, line-of-sight checks,
   engagement-range preferences, flanking/weaving, spawn protection, elite variants,
@@ -126,7 +129,7 @@ credits).
 | --- | --- |
 | **Campaign** | Training stage 0, then 24 handcrafted stages across 6 themed warzones (Arid Basin, Tundra Front, Foundry Sector, Blackout Grid, Verdant Reach, Ember Wastes), with boss stages every 4th numbered mission |
 | **Endless** | Procedurally generated arena, infinite escalating waves, arena mutates every 5 waves |
-| **Survival** | No HQ to defend — pure endurance |
+| **Survival** | No HQ to defend  pure endurance |
 | **Challenge** | Two random modifiers reshuffle the rules each seed |
 | **Boss Rush** | Five back-to-back super-heavies; hull restored between fights |
 
@@ -141,7 +144,7 @@ leaderboards, and cosmetic unlocks (paint jobs, shell trails, turret styles, HQ 
 
 ### Presentation & feel
 - Procedurally synthesised **audio**: distinct weapon voices, explosions, UI blips and
-  six per-theme music beds — all generated at runtime, no samples.
+  six per-theme music beds  all generated at runtime, no samples.
 - Particle system with fire, smoke, debris, shards, shockwave rings, floating damage
   numbers, muzzle flashes, recoil and squash.
 - Camera zoom, shake and hit-stop; screen flash on big detonations.
@@ -179,8 +182,8 @@ src/
   systems/    ParticleSystem
   modes/      GameMode base + Campaign / Endless / Survival / BossRush / Challenge
   meta/       SaveSystem (persistence, migration), Progression (XP, rewards, unlocks)
-  input/      InputManager — keyboard, mouse, gamepad and touch unified into one state
-  audio/      AudioManager — procedural Web Audio synthesis
+  input/      InputManager  keyboard, mouse, gamepad and touch unified into one state
+  audio/      AudioManager  procedural Web Audio synthesis
   render/     Camera, TerrainLayer (cached offscreen tiles), sprite painters, Renderer
   ui/         Hud, Screens, TouchControls, UIManager
   Game.ts     fixed-timestep loop + phase machine, implements the UiHost contract
@@ -211,15 +214,15 @@ npm test     # 154 tests, ~2.7s
 
 Writing these caught two genuine simulation bugs that were fixed as part of this work:
 
-1. **`Grid.raycast` overshoot** — the DDA walk compared a normalised `0..1` travel
+1. **`Grid.raycast` overshoot**  the DDA walk compared a normalised `0..1` travel
    parameter against the segment length in world units, so rays never terminated at
    their endpoint and reported phantom "steel" hits past the target. This silently
    broke line-of-sight (AI concluded a wall *behind* its target blocked sight) and
    produced wrong hit coordinates.
-2. **`World.separateTank` aliased the live enemy array** — `const all = this.enemies`
+2. **`World.separateTank` aliased the live enemy array**  `const all = this.enemies`
    followed by `all.push(this.player)` appended the **player** into `world.enemies` on
    every call. The main update loop then iterated the player as an enemy and called
-   `player.update(world, dt)` with no input object, throwing a `TypeError` mid-frame —
+   `player.update(world, dt)` with no input object, throwing a `TypeError` mid-frame 
    while also letting the AI target, count and collide with the player as a hostile,
    and growing the array unboundedly every frame. Fixed by extracting the pair
    resolution into a private helper so no combined array is ever built.
@@ -230,7 +233,7 @@ Writing these caught two genuine simulation bugs that were fixed as part of this
 
 - **No networking.** Everything is single-player and local; leaderboards are per-device.
 - **IndexedDB is not used.** Saves go to `localStorage` (with an in-memory fallback),
-  which is synchronous and quota-limited — fine for this payload, but it blocks the
+  which is synchronous and quota-limited  fine for this payload, but it blocks the
   main thread on write. Writes are debounced to mitigate this.
 - **Touch controls are functional, not tactile.** No haptics, and the virtual stick is
   a fixed-position overlay rather than a floating one anchored where you first touch.
@@ -246,7 +249,7 @@ Writing these caught two genuine simulation bugs that were fixed as part of this
 - IndexedDB storage adapter behind the existing `SaveSystem` interface for larger saves
   and async writes.
 - Daily/weekly seeded challenge with a shared seed and a ghost replay of your best run.
-- Replay system — the simulation is already deterministic and seeded, so recording an
+- Replay system  the simulation is already deterministic and seeded, so recording an
   input stream would be enough.
 - WebGL renderer for particle-heavy scenes, and a proper entity-component split if the
   entity variety keeps growing.
@@ -258,7 +261,7 @@ Writing these caught two genuine simulation bugs that were fixed as part of this
 
 ## Developer
 
-**Abbas Damerchi** — Senior Full-Stack Software Engineer.
+**Abbas Damerchi**  Senior Full-Stack Software Engineer.
 
 Building distributed systems, automated e-commerce platforms and FinTech products.
 
@@ -284,7 +287,7 @@ Building distributed systems, automated e-commerce platforms and FinTech product
 ## Credits
 
 An original homage to [*Battle City*](https://en.wikipedia.org/wiki/Battle_City)
-(Namco, 1985). TANKFORGE is a modern, free rebuild of that classic — the source
+(Namco, 1985). TANKFORGE is a modern, free rebuild of that classic  the source
 will be public on [GitHub](https://Github.com/irAbs174) soon. This project shares
 no code, art, audio or other assets with the original; the visual identity, audio
 synthesis, level designs and game systems are all new work created for this
